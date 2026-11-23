@@ -7,6 +7,7 @@
 //
 // Messages between teammates are scene triggers, which the server only hands to the players in the same scene:
 //  co_down   <seconds left>              this player is down and can be revived
+//  co_out                                this player's Game Over is running: they cannot revive anyone
 //  co_up     <0 gave up, 1 revived>      this player is no longer down
 //  co_revive <target> <kind> <health>    a teammate revives the target (kind: COOP_REVIVE_*)
 //  co_give   <target> <kind>             a teammate gives the target a bottle (kind: COOP_GIVE_*)
@@ -149,6 +150,12 @@ bool IsDungeonScene(int scene) {
     return (scene >= SCENE_DEKU_TREE && scene <= SCENE_INSIDE_GANONS_CASTLE && scene != SCENE_THIEVES_HIDEOUT);
 }
 
+// The Game Over is running (not a fairy's revive): this player is out until they respawn.
+bool InDeathGameOver(PlayState* play) {
+    const u16 state = play->gameOverCtx.state;
+    return state >= GAMEOVER_DEATH_START && state < GAMEOVER_REVIVE_START;
+}
+
 bool IsBossScene(int scene) {
     return scene >= SCENE_DEKU_TREE_BOSS && scene <= SCENE_GANONDORF_BOSS;
 }
@@ -226,7 +233,7 @@ bool ZeldaOnlineClient::CoopMateCanHelp() const {
         if (c == nullptr || !c->IsPlayer() || c->GetActor() == nullptr)
             continue;
         uint32_t id = (uint32_t)c->NetworkID();
-        if (!IsPartyMember(id) || m_coopDowned.count(id) != 0)
+        if (!IsPartyMember(id) || m_coopDowned.count(id) != 0 || m_coopOut.count(id) != 0)
             continue;
         return true;
     }
@@ -335,6 +342,21 @@ void ZeldaOnlineClient::CoopUpdateDowned(PlayState* play, Player* player) {
         }
     }
 
+    // teammates who stopped saying they are out (respawned, left) can help again
+    for (auto it = m_coopOut.begin(); it != m_coopOut.end();) {
+        if (++it->second > 3 * kFps || GetNetworkController((int)it->first) == nullptr)
+            it = m_coopOut.erase(it);
+        else
+            ++it;
+    }
+
+    // This player's Game Over is running. The teammates who are down must not wait for a revive from them: when
+    // nobody else is up, that is a party wipe and they get their Game Over too (the alone rule below).
+    const bool out = !m_coopIsDowned && InDeathGameOver(play);
+    if (out && (!m_coopWasOut || (m_coopFrame % kFps) == 0))
+        SendSceneTrigger("co_out", ByteStream());
+    m_coopWasOut = out;
+
     if (!m_coopIsDowned)
         return;
 
@@ -360,8 +382,11 @@ void ZeldaOnlineClient::CoopUpdateDowned(PlayState* play, Player* player) {
     m_coopAloneFrames = CoopMateCanHelp() ? 0 : m_coopAloneFrames + 1;
 
     if (m_coopDownedFrames <= 0 || m_coopGiveUpFrames >= kGiveUpFrames || m_coopAloneFrames >= kAloneGameOverFrames ||
-        !isConnected)
+        !isConnected) {
+        if (m_coopAloneFrames >= kAloneGameOverFrames && CoopOtherMemberInScene())
+            CoopShowNotice("The whole party is down.", 3);
         CoopEndDowned(true);
+    }
 }
 
 // A teammate's revive reached this player.
@@ -828,6 +853,11 @@ void ZeldaOnlineClient::CoopOnSceneTrigger(AbstractActorController* sendingPlaye
             Sfx_PlaySfxCentered(NA_SE_SY_WARNING_COUNT_N);
             CoopShowNotice(MemberName(from) + " is down!", 3);
         }
+    } else if (name == "co_out") {
+        m_coopOut[from] = 0;
+        if (m_coopDowned.erase(from) != 0)
+            if (Actor* actor = sendingPlayer->GetActor())
+                NameTag_RemoveAllByActorTag(actor, "co_down");
     } else if (name == "co_up") {
         uint8_t revived = data.BytesLeft() >= 1 ? (uint8_t)data.Read<PackedUInt1>().value() : 0;
         if (m_coopDowned.erase(from) != 0) {
@@ -1100,6 +1130,8 @@ bool ZeldaOnlineClient::CoopDiffJoin(const CoopJoinSnapshot& before) {
 void ZeldaOnlineClient::CoopOnSaveChanged(bool loaded) {
     m_coopIsDowned = false;
     m_coopDowned.clear();
+    m_coopOut.clear();
+    m_coopWasOut = false;
     m_coopMenuOpen = false;
     m_coopDarkLink = nullptr;
     m_coopDarkLinkSpawned = false;
@@ -1116,6 +1148,8 @@ void ZeldaOnlineClient::CoopOnSaveChanged(bool loaded) {
 
 void ZeldaOnlineClient::CoopOnSceneInit() {
     m_coopDowned.clear();
+    m_coopOut.clear();
+    m_coopWasOut = false;
     m_coopIsDowned = false;
     m_coopDarkLink = nullptr;
     m_coopDarkLinkSpawned = false;

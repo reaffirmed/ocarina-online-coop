@@ -223,6 +223,8 @@ class ZeldaOnlineClient : public ZNetworking {
         int quiet = 0; // frames since the last "down" message
     };
     std::unordered_map<uint32_t, CoopDownedMate> m_coopDowned; // teammates down in this scene, by network id
+    std::unordered_map<uint32_t, int> m_coopOut; // teammates in their Game Over in this scene: frames since "out"
+    bool m_coopWasOut = false;                   // this player's Game Over was already announced
     bool m_coopIsDowned = false;                               // this player lies down and waits for a revive
     int m_coopDownedFrames = 0;                                // frames left before the Game Over
     int m_coopGiveUpFrames = 0;                                // B held

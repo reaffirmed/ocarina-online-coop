@@ -172,6 +172,11 @@ fairy given from a bottle revives with 8 hearts and empties the bottle, a red po
 walking into the Deku Tree asks the other player for the ready check, and a Game Over with nobody around waits the
 cooldown and leaves a marker with half the rupees.
 
+`coop_wipe` covers a party wipe with a 30 second downed timer and nobody pressing B. Both players dying at the same
+moment both go down, then both get the Game Over within a few seconds. One player down and the other dying next: the
+second one gets the Game Over at once (nobody left to revive them) and the one who was down gets it too, instead of
+waiting the whole timer for a teammate who is already out.
+
 `coop_darklink` (both adult) places a marker with Marker + Dark Link: Dark Link appears with the notice, wakes up and
 fights when Link comes close, and beating him gives the rupees back. Then the host switches the party to Marker only
 and walking onto a new marker picks its rupees up.
