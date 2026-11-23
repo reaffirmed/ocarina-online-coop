@@ -24,6 +24,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <chrono>
+#include <algorithm>
 #include "HorsePuppet.hpp"
 #include "PacketStrings.hpp"
 #include "assets/objects/gameplay_keep/gameplay_keep.h"
@@ -250,6 +252,9 @@ static void ReloadSceneInPlace(PlayState* play) {
     });
 }
 
+static double SteadySeconds() {
+    return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
 
 // Must be 10 characters
 static const std::string CURRENT_VERSION = "BETA000003";
@@ -278,6 +283,7 @@ void ZeldaOnlineClient::Connect() {
         m_port = m_lobbyPort;
     }
 
+    m_reconnectAt = 0.0;
     std::vector<std::string> archives;
     SplitSkinRef(m_skinRef, m_skinName, archives);
     ZeldaOnlineRoomWindow::Instance->SetConnecting(true);
@@ -296,7 +302,14 @@ void ZeldaOnlineClient::Connect() {
 
 void ZeldaOnlineClient::Disconnect() {
     m_autoReconnect = false;
-    
+    m_failedReconnects = 0;
+    if (!isEnabled && m_reconnectAt != 0.0) {
+        // between two tries: only the wait is left to cancel
+        m_reconnectAt = 0.0;
+        RegisterNetworkingHook(false);
+        CoopPolish::OnDisconnected(false);
+    }
+
     ZNetworking::Disable();
     ReloadSceneInPlace(gPlayState);
 
@@ -711,11 +724,11 @@ void ZeldaOnlineClient::OnConnected() {
     m_lastSentTimeFlows = 0xFF;
     WritePacket(newPacket(CLIENT_PACKET_AUTH) << CURRENT_VERSION << PackedUInt1(m_didDisconnect) << PackedUInt8(m_clientGUID));
 
-    CoopPolish::OnConnected(m_didDisconnect);
-
-    //We reconnected after a disconnect. Reload the scene
-    if (m_didDisconnect)
-        ReloadSceneInPlace(gPlayState);
+    // "Back online" and the scene reload wait for the server's answer (SERVER_PACKET_AUTH_RESPONSE). When the host
+    // has left, the joiner's Steam relay still accepts the connection and closes it straight away; doing them here
+    // reloaded the scene on every try, which made the screen flicker and Link aim on and off.
+    m_authed = false;
+    m_reloadOnAuth = m_didDisconnect;
     m_showConnectionStatusTimer = 5 * 20;
 
     
@@ -736,12 +749,27 @@ void ZeldaOnlineClient::OnDisconnected() {
     RegisterHooks(false);
     ActorControllerFactory::Instance().RegisterActorHooks(false);
 
-    CoopPolish::OnDisconnected(m_autoReconnect && CVarGetInteger("gZeldaOnline.Enabled", 0));
+    const bool reconnect = m_autoReconnect && CVarGetInteger("gZeldaOnline.Enabled", 0);
+    CoopPolish::OnDisconnected(reconnect);
 
     //If we disconnected then reconnect, unless we were kicked (due to wrong version for example)
-    if (m_autoReconnect && CVarGetInteger("gZeldaOnline.Enabled", 0)) {
-        Connect();
+    if (!reconnect) {
+        m_failedReconnects = 0;
+        m_reconnectAt = 0.0;
+        return;
     }
+    if (m_authed) {
+        // a session that was up: try again at once
+        m_authed = false;
+        m_failedReconnects = 0;
+        Connect();
+        return;
+    }
+    // Nobody answered (refused, or accepted and closed before the auth). Wait 1, 2, 4, then 5 seconds between tries
+    // instead of reconnecting every frame. The networking hook stays on to start the next try.
+    m_failedReconnects = std::min(m_failedReconnects + 1, 4);
+    m_reconnectAt = SteadySeconds() + std::min(5.0, (double)(1 << (m_failedReconnects - 1)));
+    RegisterNetworkingHook(true);
 }
 
 void ZeldaOnlineClient::OnConnectionClosedBeforeConnect() {
@@ -1020,6 +1048,14 @@ void ZeldaOnlineClient::OnIncomingPacket(ByteStream& packet) {
 
             UpdateAppearance();
             printf("MY NETWORK ID SET TO %i\n", int(m_myNetworkID));
+
+            m_authed = true;
+            m_failedReconnects = 0;
+            CoopPolish::OnConnected(m_reloadOnAuth);
+            // We reconnected after a disconnect. Reload the scene
+            if (m_reloadOnAuth)
+                ReloadSceneInPlace(gPlayState);
+            m_reloadOnAuth = false;
 
             WritePacket(newPacket(CLIENT_PACKET_INIT_PLAYER_LIST));
             SendTimeFlowsIfChanged();
@@ -2099,6 +2135,16 @@ void ZeldaOnlineClient::UpdateAppearance() {
 
 void ZeldaOnlineClient::NetworkHook() 
 {
+    if (!isEnabled && m_reconnectAt != 0.0) {
+        // waiting before the next reconnect try
+        if (!m_autoReconnect || !CVarGetInteger("gZeldaOnline.Enabled", 0)) {
+            m_reconnectAt = 0.0;
+            RegisterNetworkingHook(false);
+        } else if (SteadySeconds() >= m_reconnectAt) {
+            Connect();
+        }
+        return;
+    }
     // voice first, so the frames it just read from the microphone go out with this poll
     VoiceChat::Instance().Update(this);
     ZNetworking::Poll();

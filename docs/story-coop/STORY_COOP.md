@@ -141,7 +141,12 @@ The presentation code is in `ZeldaOnlinePolish.cpp`, apart from the sync code.
   font, kept clear of the rupee counter and the map.
 - **Connection notices.** A dropped connection shows `Connection lost reconnecting...` with the other notifications
   (bottom right by default), `Is the host still online?` after 45 seconds, and `Back online` when it is back. They
-  replace the old green "Connected" and red "Disconnected" text.
+  replace the old green "Connected" and red "Disconnected" text. Only a connection the server answers counts as back
+  (that is when the scene is reloaded): one that is accepted and closed again straight away does not, and the tries
+  after a failed one wait 1, 2, 4 and then 5 seconds instead of running every frame.
+- **When the host stops hosting** (Stop hosting, or closing the game) the joiners of a Co-op Lobby session are told
+  `Co-op ended` in the text box and keep playing on their own, instead of trying to reconnect to a host who is gone.
+  The lobby says `<host> stopped hosting.` until they choose Leave.
 - **Messages in the game's text box.** Being disconnected by the host, a different release, or a save that does not
   match the party opens the game's own text box while playing (Link waits while it is up), or a panel on the title
   and file select screens, instead of a system dialog.
