@@ -252,7 +252,6 @@ static void ReloadSceneInPlace(PlayState* play) {
     });
 }
 
-
 static double SteadySeconds() {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
@@ -1053,7 +1052,7 @@ void ZeldaOnlineClient::OnIncomingPacket(ByteStream& packet) {
             m_authed = true;
             m_failedReconnects = 0;
             CoopPolish::OnConnected(m_reloadOnAuth);
-            //We reconnected after a disconnect. Reload the scene
+            // We reconnected after a disconnect. Reload the scene
             if (m_reloadOnAuth)
                 ReloadSceneInPlace(gPlayState);
             m_reloadOnAuth = false;

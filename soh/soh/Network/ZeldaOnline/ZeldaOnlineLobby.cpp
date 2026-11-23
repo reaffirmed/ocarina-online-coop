@@ -561,7 +561,7 @@ void CoopLobbyWindow::Draw() {
         m_clientStarted = false;
         const std::string who = m_connectedTo.empty() ? std::string("The host") : m_connectedTo;
         CoopPolish::ShowMessage("Co-op ended", who + " stopped hosting. You can keep playing on your own; join again "
-                                                    "when they host.");
+                                                     "when they host.");
     }
     if (m_clientStarted && m_helper.state == CoopLobbyHelper::State::Failed) {
         if (Client() != nullptr)
