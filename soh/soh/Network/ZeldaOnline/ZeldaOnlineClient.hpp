@@ -93,6 +93,13 @@ class ZeldaOnlineClient : public ZNetworking {
     bool m_didDisconnect = false;
     bool m_autoReconnect = true;
     bool m_wasConnected = false;
+    // The server answered this connection's auth. A connection that is accepted and then closed before that (the
+    // Steam relay of a host who left, a server that is shutting down) is not a session: no scene reload, no
+    // "Back online", and the next try waits instead of starting again on the next frame.
+    bool m_authed = false;
+    bool m_reloadOnAuth = false;
+    int m_failedReconnects = 0;
+    double m_reconnectAt = 0.0; // seconds (steady clock); 0 = no reconnect waiting
 
     uint64_t m_bytesSent = 0;
     uint64_t m_bytesReceived = 0;

@@ -2,6 +2,7 @@
 // See ZeldaOnlineLobby.hpp for how it fits together.
 #include "ZeldaOnlineLobby.hpp"
 #include "ZeldaOnlineClient.hpp"
+#include "ZeldaOnlinePolish.hpp"
 #include "ZeldaOnlineRoomWindow.hpp"
 #include "PartySettings.hpp"
 #include "soh/Enhancements/AutoTest/AutoTest.h"
@@ -549,8 +550,19 @@ void CoopLobbyWindow::Draw() {
     if (!m_helper.steamName.empty() && CVarGetString("gZeldaOnline.Nickname", "")[0] == '\0')
         SetPlayerName(m_helper.steamName.substr(0, 32));
 
-    if (m_helper.state == CoopLobbyHelper::State::Ready && !m_clientStarted && !m_stopping)
+    if (m_helper.state == CoopLobbyHelper::State::Ready && !m_clientStarted && !m_stopping && !m_helper.hostGone)
         ConnectClient();
+    // The host stopped hosting (or closed the game). The relay keeps accepting connections and closing them, so the
+    // client would keep trying: end the co-op session once instead, and say so. The page shows "... stopped hosting."
+    // with Leave until the player leaves.
+    if (m_clientStarted && m_helper.hostGone && !m_helper.hosting) {
+        if (Client() != nullptr)
+            Client()->LobbyLeave();
+        m_clientStarted = false;
+        const std::string who = m_connectedTo.empty() ? std::string("The host") : m_connectedTo;
+        CoopPolish::ShowMessage("Co-op ended", who + " stopped hosting. You can keep playing on your own; join again "
+                                                    "when they host.");
+    }
     if (m_clientStarted && m_helper.state == CoopLobbyHelper::State::Failed) {
         if (Client() != nullptr)
             Client()->LobbyLeave();
