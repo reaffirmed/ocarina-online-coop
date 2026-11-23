@@ -1,0 +1,660 @@
+{
+ "name": "coop_wipe",
+ "server": {
+  "host": "127.0.0.1",
+  "port": 21650
+ },
+ "boot": {
+  "entrance": 187,
+  "age": "child"
+ },
+ "stages": [
+  {
+   "name": "together",
+   "server": "fresh",
+   "roles": {
+    "A": {
+     "name": "TestA",
+     "steps": [
+      {
+       "op": "wait_play",
+       "timeout_frames": 1800
+      },
+      {
+       "op": "connect"
+      },
+      {
+       "op": "wait_until",
+       "cond": "connected",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "net_id",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "warp",
+       "entrance": 238,
+       "scene": 85,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_until",
+       "cond": "other_players",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "create_party",
+       "story_coop": true,
+       "story_code": "wipe-together",
+       "coop_rules": {
+        "friendlyFire": 0,
+        "songRevive": true,
+        "bottleRevive": true,
+        "downedSeconds": 30,
+        "deathPenalty": 0,
+        "respawnCooldown": 0,
+        "readyCheck": false
+       }
+      },
+      {
+       "op": "wait_until",
+       "cond": "has_party",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "story_active",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "invite"
+      },
+      {
+       "op": "wait_until",
+       "cond": "party_size",
+       "n": 2,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peers_in_scene",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peer_puppets",
+       "n": 1,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_frames",
+       "n": 60
+      },
+      {
+       "op": "set_flag",
+       "type": "inf_table",
+       "flag": 450
+      },
+      {
+       "op": "wait_frames",
+       "n": 3
+      },
+      {
+       "op": "set_slot",
+       "slot": 18,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 19,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 20,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 21,
+       "item": 255
+      },
+      {
+       "op": "set_health",
+       "health": 16
+      },
+      {
+       "op": "enemy_hit",
+       "damage": 32,
+       "name": "kill"
+      },
+      {
+       "op": "wait_frames",
+       "n": 30
+      },
+      {
+       "op": "observe",
+       "name": "a_down"
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "game_over_state",
+       "value": 1,
+       "cmp": "ge",
+       "timeout_frames": 300
+      },
+      {
+       "op": "observe",
+       "name": "a_go"
+      },
+      {
+       "op": "wait_frames",
+       "n": 200
+      },
+      {
+       "op": "quit",
+       "pass": true
+      }
+     ]
+    },
+    "B": {
+     "name": "TestB",
+     "steps": [
+      {
+       "op": "wait_play",
+       "timeout_frames": 1800
+      },
+      {
+       "op": "connect"
+      },
+      {
+       "op": "wait_until",
+       "cond": "connected",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "net_id",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "warp",
+       "entrance": 238,
+       "scene": 85,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_until",
+       "cond": "invite_pending",
+       "timeout_frames": 7200
+      },
+      {
+       "op": "accept_invite"
+      },
+      {
+       "op": "wait_until",
+       "cond": "has_party",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "story_active",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "party_size",
+       "n": 2,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peers_in_scene",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peer_puppets",
+       "n": 1,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_frames",
+       "n": 60
+      },
+      {
+       "op": "wait_until",
+       "cond": "flag",
+       "type": "inf_table",
+       "flag": 450,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "set_slot",
+       "slot": 18,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 19,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 20,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 21,
+       "item": 255
+      },
+      {
+       "op": "set_health",
+       "health": 16
+      },
+      {
+       "op": "enemy_hit",
+       "damage": 32,
+       "name": "kill"
+      },
+      {
+       "op": "wait_frames",
+       "n": 30
+      },
+      {
+       "op": "observe",
+       "name": "b_down"
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "game_over_state",
+       "value": 1,
+       "cmp": "ge",
+       "timeout_frames": 300
+      },
+      {
+       "op": "observe",
+       "name": "b_go"
+      },
+      {
+       "op": "wait_frames",
+       "n": 200
+      },
+      {
+       "op": "quit",
+       "pass": true
+      }
+     ]
+    }
+   },
+   "assertions": [
+    {
+     "type": "each",
+     "obs": "a_down",
+     "path": "coop.downed",
+     "op": "eq",
+     "value": true,
+     "roles": [
+      "A"
+     ],
+     "label": "A goes down first (nobody knew yet)"
+    },
+    {
+     "type": "each",
+     "obs": "b_down",
+     "path": "coop.downed",
+     "op": "eq",
+     "value": true,
+     "roles": [
+      "B"
+     ],
+     "label": "B goes down first (nobody knew yet)"
+    },
+    {
+     "type": "each",
+     "obs": "a_go",
+     "path": "coop.game_over_state",
+     "op": "ge",
+     "value": 1,
+     "roles": [
+      "A"
+     ],
+     "label": "A gets the Game Over without pressing B"
+    },
+    {
+     "type": "each",
+     "obs": "b_go",
+     "path": "coop.game_over_state",
+     "op": "ge",
+     "value": 1,
+     "roles": [
+      "B"
+     ],
+     "label": "B gets the Game Over without pressing B"
+    }
+   ]
+  },
+  {
+   "name": "one_after_the_other",
+   "server": "fresh",
+   "roles": {
+    "A": {
+     "name": "TestA",
+     "steps": [
+      {
+       "op": "wait_play",
+       "timeout_frames": 1800
+      },
+      {
+       "op": "connect"
+      },
+      {
+       "op": "wait_until",
+       "cond": "connected",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "net_id",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "warp",
+       "entrance": 238,
+       "scene": 85,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_until",
+       "cond": "other_players",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "create_party",
+       "story_coop": true,
+       "story_code": "wipe-after",
+       "coop_rules": {
+        "friendlyFire": 0,
+        "songRevive": true,
+        "bottleRevive": true,
+        "downedSeconds": 30,
+        "deathPenalty": 0,
+        "respawnCooldown": 0,
+        "readyCheck": false
+       }
+      },
+      {
+       "op": "wait_until",
+       "cond": "has_party",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "story_active",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "invite"
+      },
+      {
+       "op": "wait_until",
+       "cond": "party_size",
+       "n": 2,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peers_in_scene",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peer_puppets",
+       "n": 1,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_frames",
+       "n": 60
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "coop_downed_mates",
+       "value": 1,
+       "cmp": "ge",
+       "timeout_frames": 2400
+      },
+      {
+       "op": "wait_frames",
+       "n": 40
+      },
+      {
+       "op": "set_slot",
+       "slot": 18,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 19,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 20,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 21,
+       "item": 255
+      },
+      {
+       "op": "set_health",
+       "health": 16
+      },
+      {
+       "op": "enemy_hit",
+       "damage": 32,
+       "name": "kill"
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "game_over_state",
+       "value": 1,
+       "cmp": "ge",
+       "timeout_frames": 300
+      },
+      {
+       "op": "observe",
+       "name": "a_go"
+      },
+      {
+       "op": "wait_frames",
+       "n": 200
+      },
+      {
+       "op": "quit",
+       "pass": true
+      }
+     ]
+    },
+    "B": {
+     "name": "TestB",
+     "steps": [
+      {
+       "op": "wait_play",
+       "timeout_frames": 1800
+      },
+      {
+       "op": "connect"
+      },
+      {
+       "op": "wait_until",
+       "cond": "connected",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "net_id",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "warp",
+       "entrance": 238,
+       "scene": 85,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_until",
+       "cond": "invite_pending",
+       "timeout_frames": 7200
+      },
+      {
+       "op": "accept_invite"
+      },
+      {
+       "op": "wait_until",
+       "cond": "has_party",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "story_active",
+       "timeout_frames": 1200
+      },
+      {
+       "op": "wait_until",
+       "cond": "party_size",
+       "n": 2,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peers_in_scene",
+       "n": 1,
+       "timeout_frames": 3600
+      },
+      {
+       "op": "wait_until",
+       "cond": "peer_puppets",
+       "n": 1,
+       "timeout_frames": 1800
+      },
+      {
+       "op": "wait_frames",
+       "n": 60
+      },
+      {
+       "op": "set_slot",
+       "slot": 18,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 19,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 20,
+       "item": 255
+      },
+      {
+       "op": "set_slot",
+       "slot": 21,
+       "item": 255
+      },
+      {
+       "op": "set_health",
+       "health": 16
+      },
+      {
+       "op": "enemy_hit",
+       "damage": 32,
+       "name": "kill"
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "coop_downed",
+       "value": 1,
+       "cmp": "eq",
+       "timeout_frames": 200
+      },
+      {
+       "op": "observe",
+       "name": "b_down"
+      },
+      {
+       "op": "wait_until",
+       "cond": "field",
+       "field": "game_over_state",
+       "value": 1,
+       "cmp": "ge",
+       "timeout_frames": 300
+      },
+      {
+       "op": "observe",
+       "name": "b_go"
+      },
+      {
+       "op": "wait_frames",
+       "n": 200
+      },
+      {
+       "op": "quit",
+       "pass": true
+      }
+     ]
+    }
+   },
+   "assertions": [
+    {
+     "type": "each",
+     "obs": "b_down",
+     "path": "coop.downed",
+     "op": "eq",
+     "value": true,
+     "roles": [
+      "B"
+     ],
+     "label": "B goes down while A is up"
+    },
+    {
+     "type": "each",
+     "obs": "a_go",
+     "path": "coop.game_over_state",
+     "op": "ge",
+     "value": 1,
+     "roles": [
+      "A"
+     ],
+     "label": "A, the last one standing, gets the Game Over"
+    },
+    {
+     "type": "each",
+     "obs": "b_go",
+     "path": "coop.game_over_state",
+     "op": "ge",
+     "value": 1,
+     "roles": [
+      "B"
+     ],
+     "label": "downed B gets the Game Over once A is out too"
+    }
+   ]
+  }
+ ]
+}
