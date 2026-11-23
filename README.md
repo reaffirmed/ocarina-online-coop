@@ -15,7 +15,7 @@ the world, adjustable difficulty and a few more Story Co-op fixes. Everything up
 
 ## Download and play
 
-Get the latest build from [Releases](https://github.com/reaffirmed/ocarina-coop-timefix/releases/latest):
+Get the latest build from [Releases](https://github.com/reaffirmed/ocarina-online-coop/releases/latest):
 
 | System | Download |
 | --- | --- |

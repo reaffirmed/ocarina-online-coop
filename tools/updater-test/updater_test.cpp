@@ -68,7 +68,7 @@ static void TestParseRelease() {
     // another repo, or plain http: nothing is taken from it
     CHECK(!ParseRelease(ReleaseJson("v1.1.0", "https://github.com/someone/else/releases/download/"),
                         Platform::Windows, r, err));
-    CHECK(!ParseRelease(ReleaseJson("v1.1.0", "http://github.com/reaffirmed/ocarina-coop-timefix/releases/download/"),
+    CHECK(!ParseRelease(ReleaseJson("v1.1.0", "http://github.com/reaffirmed/ocarina-online-coop/releases/download/"),
                         Platform::Windows, r, err));
     CHECK(!ParseRelease(ReleaseJson("v1.1.0", kDownloadPrefix, true), Platform::Windows, r, err));
     CHECK(!ParseRelease(ReleaseJson("nightly", kDownloadPrefix), Platform::Windows, r, err));

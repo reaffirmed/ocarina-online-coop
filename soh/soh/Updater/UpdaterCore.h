@@ -19,11 +19,11 @@
 
 namespace Updater {
 
-constexpr const char* kRepo = "reaffirmed/ocarina-coop-timefix";
+constexpr const char* kRepo = "reaffirmed/ocarina-online-coop";
 constexpr const char* kLatestReleaseApi =
-    "https://api.github.com/repos/reaffirmed/ocarina-coop-timefix/releases/latest";
-constexpr const char* kDownloadPrefix = "https://github.com/reaffirmed/ocarina-coop-timefix/releases/download/";
-constexpr const char* kReleasePagePrefix = "https://github.com/reaffirmed/ocarina-coop-timefix/releases/tag/";
+    "https://api.github.com/repos/reaffirmed/ocarina-online-coop/releases/latest";
+constexpr const char* kDownloadPrefix = "https://github.com/reaffirmed/ocarina-online-coop/releases/download/";
+constexpr const char* kReleasePagePrefix = "https://github.com/reaffirmed/ocarina-online-coop/releases/tag/";
 constexpr const char* kSumsName = "SHA256SUMS.txt";
 
 struct Version {
