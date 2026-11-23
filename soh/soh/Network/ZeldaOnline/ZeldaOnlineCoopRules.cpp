@@ -1139,9 +1139,8 @@ bool ZeldaOnlineClient::CoopGiveRupees(uint32_t target, int amount) {
     Rupees_ChangeBy((s16)-amount);
     WritePacket(newPacket(CLIENT_PACKET_GIVE_RUPEES)
                 << PackedUInt2(target) << PackedUInt2((uint32_t)amount) << PackedUInt1(RUPEE_GIVE_GIFT));
-    CoopShowNotice("You gave " + MemberName(target) + " " + std::to_string(amount) +
-                       (amount == 1 ? " rupee." : " rupees."),
-                   3);
+    CoopShowNotice(
+        "You gave " + MemberName(target) + " " + std::to_string(amount) + (amount == 1 ? " rupee." : " rupees."), 3);
     return true;
 }
 
