@@ -37,6 +37,7 @@ Steam link (mock Steam DLL): `python tools/steamlink/test/stream_test.py --work 
 | time_field | pass | 65/65 |
 | timetravel | pass | 55/55 with --timeout 1100 (22/55 at 300 s and 48/55 at 400 s, hard timeout) |
 | coop_features (teleport to member, enemy sync, Story Co-op on and off) | pass | 28/28 |
+| rupee_give (gift, full wallet sends the rest back, undelivered rupees come back, the real Co-op menu driven by the controller). Run on Linux (soh.elf, Xvfb) | pass | 16/16 |
 | single_player (no server) | pass | 7/7 |
 | cutscenes (area intro together, scene cutscene together, member elsewhere keeps the intro, trigger drops mid-cutscene, Story Co-op off) | pass | 39/39 |
 | npc_shield (gear loss per player, key NPC dialogue shown to the party, Story Co-op off) | pass | 37/37 |

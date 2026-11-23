@@ -113,7 +113,8 @@ Tailscale or ZeroTier.
   - **Death penalty:** a Game Over leaves a marker with some of your rupees (none, a quarter, half or all) where you
     fell. Optionally, as adult, Dark Link guards it in your game only.
   - **Respawn cooldown** of 5 or 10 seconds, and a **ready check** at dungeon entrances and boss doors.
-- **Co-op menu in game:** pause and press L to **Teleport to** a teammate.
+- **Co-op menu in game:** pause and press L to **Teleport to** a teammate or **Give rupees** to one (anywhere in
+  the world; what doesn't fit in their wallet comes back to you).
 - **What you got on joining:** joining a playthrough that is further along shows what the team's progress gave you.
 
 Proximity voice chat is not included.

@@ -58,6 +58,7 @@ frames):
 | `accept_invite` | accepts the first pending invite |
 | `set_party_settings` | same fields as `create_party`; sends a settings update (admin) |
 | `teleport_to` | optional `name`; sends the "Teleport to" request for another player |
+| `give_rupees` | `n`, optional `name` or `target_id` (a raw network id, which may be nobody); the Co-op menu's "Give rupees to" for the first other party member |
 | `kill_actor` | `id` (only 432, the Stalchild, is implemented), optional `role` (`leader` default, `any`), `wait`, `name`; lands a lethal hit on every awake actor of that id this client leads, retrying up to `wait` frames until there is one, and records where they stood as observation `name` (default `kill`) |
 | `enemy_hit` | `damage` (1/16 hearts, default 8), optional `name` (default `hit`); lands an enemy hit on Link through the player's hit response and records `before`, `after` and `lost` health |
 | `save_game`, `reload_save` | write save slot 0 through the real save manager, read it back from disk |

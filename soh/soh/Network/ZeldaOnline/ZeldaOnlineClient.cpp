@@ -1894,6 +1894,10 @@ void ZeldaOnlineClient::OnIncomingPacket(ByteStream& packet) {
             OnStoryState(packet);
             break;
 
+        case SERVER_PACKET_GIVE_RUPEES:
+            CoopOnGiveRupees(packet);
+            break;
+
         case SERVER_PACKET_STORY_SHARE_ITEM:
             OnStoryShareItem(packet);
             break;
