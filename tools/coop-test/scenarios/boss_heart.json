@@ -1,0 +1,465 @@
+{
+  "name": "boss_heart",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 21650
+  },
+  "boot": {
+    "entrance": 187,
+    "age": "child"
+  },
+  "roles": {
+    "A": {
+      "name": "TestA",
+      "god": true,
+      "steps": [
+        {
+          "op": "wait_play",
+          "timeout_frames": 1800
+        },
+        {
+          "op": "reset_inventory"
+        },
+        {
+          "op": "connect"
+        },
+        {
+          "op": "wait_until",
+          "cond": "connected",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "wait_until",
+          "cond": "net_id",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "warp",
+          "entrance": 238,
+          "scene": 85,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_until",
+          "cond": "other_players",
+          "n": 1,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "create_party",
+          "story_coop": true,
+          "story_code": "boss-heart-test"
+        },
+        {
+          "op": "wait_until",
+          "cond": "has_party",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "wait_until",
+          "cond": "story_active",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "invite"
+        },
+        {
+          "op": "wait_until",
+          "cond": "party_size",
+          "n": 2,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "warp",
+          "entrance": 0,
+          "scene": 0,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_until",
+          "cond": "peers_in_scene",
+          "n": 1,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "wait_frames",
+          "n": 60
+        },
+        {
+          "op": "spawn_boss_heart"
+        },
+        {
+          "op": "spawn_collectible",
+          "type": 6,
+          "flag": 13
+        },
+        {
+          "op": "wait_frames",
+          "n": 20
+        },
+        {
+          "op": "observe",
+          "name": "a_before",
+          "actors": [
+            {
+              "id": 95,
+              "radius": 2000
+            },
+            {
+              "id": 21,
+              "radius": 2000,
+              "params": 6
+            }
+          ]
+        },
+        {
+          "op": "set_flag",
+          "type": "inf_table",
+          "flag": 450
+        },
+        {
+          "op": "wait_frames",
+          "n": 20
+        },
+        {
+          "op": "wait_until",
+          "cond": "flag",
+          "type": "inf_table",
+          "flag": 451,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_until",
+          "cond": "health_capacity",
+          "n": 64,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_frames",
+          "n": 60
+        },
+        {
+          "op": "observe",
+          "name": "a_after",
+          "actors": [
+            {
+              "id": 95,
+              "radius": 2000
+            },
+            {
+              "id": 21,
+              "radius": 2000,
+              "params": 6
+            }
+          ],
+          "flags": [
+            {
+              "type": "collect",
+              "flag": 31
+            },
+            {
+              "type": "collect",
+              "flag": 13
+            }
+          ]
+        },
+        {
+          "op": "set_flag",
+          "type": "inf_table",
+          "flag": 452
+        },
+        {
+          "op": "wait_frames",
+          "n": 20
+        },
+        {
+          "op": "wait_until",
+          "cond": "flag",
+          "type": "inf_table",
+          "flag": 453,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_frames",
+          "n": 30
+        },
+        {
+          "op": "observe",
+          "name": "a_end"
+        },
+        {
+          "op": "quit",
+          "pass": true
+        }
+      ]
+    },
+    "B": {
+      "name": "TestB",
+      "god": true,
+      "steps": [
+        {
+          "op": "wait_play",
+          "timeout_frames": 1800
+        },
+        {
+          "op": "reset_inventory"
+        },
+        {
+          "op": "connect"
+        },
+        {
+          "op": "wait_until",
+          "cond": "connected",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "wait_until",
+          "cond": "net_id",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "warp",
+          "entrance": 238,
+          "scene": 85,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_until",
+          "cond": "other_players",
+          "n": 1,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "wait_until",
+          "cond": "invite_pending",
+          "timeout_frames": 3600
+        },
+        {
+          "op": "accept_invite"
+        },
+        {
+          "op": "wait_until",
+          "cond": "has_party",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "wait_until",
+          "cond": "story_active",
+          "timeout_frames": 1200
+        },
+        {
+          "op": "wait_until",
+          "cond": "party_size",
+          "n": 2,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "warp",
+          "entrance": 0,
+          "scene": 0,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_until",
+          "cond": "peers_in_scene",
+          "n": 1,
+          "timeout_frames": 3600
+        },
+        {
+          "op": "wait_frames",
+          "n": 60
+        },
+        {
+          "op": "spawn_boss_heart"
+        },
+        {
+          "op": "spawn_collectible",
+          "type": 6,
+          "flag": 13
+        },
+        {
+          "op": "wait_frames",
+          "n": 20
+        },
+        {
+          "op": "observe",
+          "name": "b_before",
+          "actors": [
+            {
+              "id": 95,
+              "radius": 2000
+            },
+            {
+              "id": 21,
+              "radius": 2000,
+              "params": 6
+            }
+          ]
+        },
+        {
+          "op": "wait_until",
+          "cond": "flag",
+          "type": "inf_table",
+          "flag": 450,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "set_flag",
+          "type": "collect",
+          "flag": 31
+        },
+        {
+          "op": "give_item",
+          "item": 114
+        },
+        {
+          "op": "set_flag",
+          "type": "collect",
+          "flag": 13
+        },
+        {
+          "op": "give_item",
+          "item": 122
+        },
+        {
+          "op": "wait_frames",
+          "n": 20
+        },
+        {
+          "op": "set_flag",
+          "type": "inf_table",
+          "flag": 451
+        },
+        {
+          "op": "wait_until",
+          "cond": "flag",
+          "type": "inf_table",
+          "flag": 452,
+          "timeout_frames": 1800
+        },
+        {
+          "op": "wait_frames",
+          "n": 60
+        },
+        {
+          "op": "observe",
+          "name": "b_end"
+        },
+        {
+          "op": "set_flag",
+          "type": "inf_table",
+          "flag": 453
+        },
+        {
+          "op": "wait_frames",
+          "n": 60
+        },
+        {
+          "op": "quit",
+          "pass": true
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "type": "each",
+      "obs": "a_before",
+      "path": "actor_count",
+      "op": "eq",
+      "value": 2,
+      "label": "A has its own boss heart and piece of heart",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "b_before",
+      "path": "actor_count",
+      "op": "eq",
+      "value": 2,
+      "label": "B has its own boss heart and piece of heart",
+      "roles": [
+        "B"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "a_after",
+      "path": "actor_count",
+      "op": "eq",
+      "value": 0,
+      "label": "A's boss heart and piece of heart are gone once B collected them",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "a_after",
+      "path": "flags.0.value",
+      "op": "eq",
+      "value": true,
+      "label": "A has the boss heart collect flag",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "a_after",
+      "path": "flags.1.value",
+      "op": "eq",
+      "value": true,
+      "label": "A has the piece of heart collect flag",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "a_end",
+      "path": "health_capacity",
+      "op": "eq",
+      "value": 64,
+      "label": "A: one heart container in total (3 + 1 hearts)",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "b_end",
+      "path": "health_capacity",
+      "op": "eq",
+      "value": 64,
+      "label": "B: one heart container in total (3 + 1 hearts)",
+      "roles": [
+        "B"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "a_end",
+      "path": "quest_items",
+      "op": "eq",
+      "value": 268435456,
+      "label": "A: one piece of heart in total",
+      "roles": [
+        "A"
+      ]
+    },
+    {
+      "type": "each",
+      "obs": "b_end",
+      "path": "quest_items",
+      "op": "eq",
+      "value": 268435456,
+      "label": "B: one piece of heart in total",
+      "roles": [
+        "B"
+      ]
+    }
+  ]
+}

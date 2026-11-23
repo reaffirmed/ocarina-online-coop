@@ -128,9 +128,12 @@ bool StoryIsPartyScene(int sceneNum) {
     }
 }
 
-// A collectible (floor key, heart piece, rupee with a collect flag) that another member just picked up is still lying
-// in this client's room. Take it away, otherwise the same pickup could be collected twice (a floor key would give two
-// small keys of the shared count).
+// Collect flag of the boss heart container (Item_B_Heart sets it on pickup and despawns when it is already set)
+const s16 STORY_BOSS_HEART_COLLECT_FLAG = 0x1F;
+
+// A collectible (floor key, heart piece, rupee with a collect flag, the boss heart container) that another member just
+// picked up is still lying in this client's room. Take it away, otherwise the same pickup could be collected twice (a
+// floor key would give two small keys of the shared count, a heart container would raise the shared hearts twice).
 void StoryRemoveCollected(PlayState* play, u32 newBits) {
     if (play == nullptr || newBits == 0)
         return;
@@ -141,6 +144,8 @@ void StoryRemoveCollected(PlayState* play, u32 newBits) {
             s16 flag = ((EnItem00*)actor)->collectibleFlag;
             if (flag > 0 && flag < 32 && (newBits & (1u << flag)) != 0)
                 Actor_Kill(actor);
+        } else if (actor->id == ACTOR_ITEM_B_HEART && (newBits & (1u << STORY_BOSS_HEART_COLLECT_FLAG)) != 0) {
+            Actor_Kill(actor);
         }
         actor = next;
     }

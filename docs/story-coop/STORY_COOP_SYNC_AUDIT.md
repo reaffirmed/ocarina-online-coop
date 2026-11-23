@@ -61,7 +61,7 @@ Legend
 
 | Part | Status | Notes |
 | --- | --- | --- |
-| `chest`, `collect` | Shared | Opened chests and picked up collectibles in every scene, overworld included (Kakariko, Hyrule Field, Zora's Domain, ...). The pickup itself (rupees, hearts) is personal because rupees and health are. |
+| `chest`, `collect` | Shared | Opened chests and picked up collectibles in every scene, overworld included (Kakariko, Hyrule Field, Zora's Domain, ...). The pickup itself (rupees, hearts) is personal because rupees and health are. A pickup another member just took (floor key, piece of heart, the boss heart container on collect flag 0x1F) is removed from the room, so it can't be collected a second time. |
 | `swch`, `clear` of overworld scenes | Shared | Permanent switches and room clears (gates, boulders, bean spots, Windmill, ...). |
 | `swch`, `clear` of dungeons and boss rooms | Shared | Live through the server's dungeon instance, and kept in the team save for the next visit (see STORY_COOP.md). |
 | Water Temple water level (`swch` 0x1C-0x1E), Forest Temple elevator (`swch` 0x1B) | Shared as last writer wins slots | See the verdict in section 9. |
