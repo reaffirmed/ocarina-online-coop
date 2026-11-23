@@ -1460,6 +1460,17 @@ bool RunStep(const json& step) {
         }
         return true;
     }
+    if (op == "spawn_boss_heart") {
+        // The boss heart container (Item_B_Heart, collect flag 0x1F), placed out of Link's pickup range.
+        if (!PlayReady()) return timedOut("spawn_boss_heart not ready");
+        Player* pl = GET_PLAYER(gPlayState);
+        Actor* a = Actor_Spawn(&gPlayState->actorCtx, gPlayState, ACTOR_ITEM_B_HEART, pl->actor.world.pos.x + 160.0f,
+                               pl->actor.world.pos.y + 20.0f, pl->actor.world.pos.z, 0, 0, 0, 0);
+        if (a == nullptr) {
+            Finish(false, "spawn_boss_heart: spawn failed");
+        }
+        return true;
+    }
     if (op == "use_key") {
         // A small key spent on a door: same hook the door actors run.
         if (!PlayReady()) return timedOut("use_key not ready");

@@ -68,6 +68,7 @@ frames):
 | `wait_pause` | `state` (default 6, the open menu; 0 closed): waits for that pause menu state |
 | `set_flag`, `unset_flag` | `type` (`switch`, `clear`, `collect`, `treasure`, `event_chk_inf`, `inf_table`, `item_get_inf`, `quest_item`), `flag`; `unset_flag` supports `switch` and `clear` only (the toggle-off path) |
 | `reset_inventory` | empties items, ammo, quest items, dungeon items, upgrades; 3 hearts, 0 rupees (the debug save starts full) |
+| `spawn_collectible`, `spawn_boss_heart` | `type` (default small key), `flag` / none: a floor pickup with that collect flag, or the boss heart container, 160 units from Link |
 | `give_item` | `item` (item id), optional `map_index`; calls `Item_Give`, so the OnItemReceive hooks fire like a pickup |
 | `set_field`, `add_field` | `field`, `value`: a named save field (`world_map`, `high_score:N`, `horse_scene` / `horse_x` / `horse_y` / `horse_z` / `horse_angle`, `scarecrow_spawn_set`, `scarecrow_spawn_note:K`, `scarecrow_long_set`, `scarecrow_long_note:K`, `scene_rooms:S`, `scene_floors:S`, `event_inf:N`, `gs_tokens`, `gs_flags:N`, `sword_health`, `b_button`, `equipment`, ...; see `SaveField` in `AutoTest.inl`). `add_field` adds to the current value, like a delivery or pickup would |
 | `set_ammo`, `set_slot` | `slot`, `n` / `item`; direct inventory writes |
@@ -147,6 +148,12 @@ apart (the Running Man score, the pond owner's hat, `eventInf`, which item is on
 Gold Skulltula tokens, the Biggoron's Sword flag, owned sword and shield bits, magic and double defense reach the other
 client and come back after a restart. The second stage restarts the server and checks that a
 fresh Water Temple and Forest Temple instance start with the party's level and elevator position.
+
+## Boss heart scenario
+
+`boss_heart` puts both clients in the Deku Tree, each with its own boss heart container (`spawn_boss_heart`, collect flag
+0x1F) and piece of heart on the floor. B picks both up: A's copies must disappear, and both clients must end with one
+extra heart container and one piece of heart in total, not one per player.
 
 ## Offline unit test
 
