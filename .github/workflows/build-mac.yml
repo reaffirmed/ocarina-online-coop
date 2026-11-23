@@ -2,16 +2,26 @@ name: Build Mac app
 
 on:
   workflow_dispatch:
+  # GitHub drops caches nobody has used for 7 days. Mac builds only happen
+  # around releases, so touch the MacPorts and ccache caches twice a week
+  # to keep the next real build fast.
+  schedule:
+    - cron: "17 6 * * 1,4"
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-mac-${{ github.ref }}
+  # Keep the cache warm-up in its own group so it never cancels a real build.
+  group: build-mac-${{ github.event_name == 'schedule' && 'keep-warm' || 'build' }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: ${{ github.workspace }}
 
 jobs:
   build:
+    if: github.event_name != 'schedule'
     runs-on: macos-15
     steps:
       - name: Check out source
@@ -24,17 +34,34 @@ jobs:
         with:
           parameters: .github/macports.yml
 
+      # Reuse earlier compile results, like the Windows and Linux builds do.
+      # The whole game is compiled for both Intel and Apple Silicon, so this
+      # saves the most time here. Only builds of main save a new cache;
+      # builds of other branches read main's.
+      - name: Set up compile cache
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-mac-release
+          max-size: "3G"
+          evict-old-files: job
+          save: ${{ github.ref_name == github.event.repository.default_branch }}
+
       - name: Configure game
         run: >-
           cmake -S . -B build-cmake -G Ninja
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Generate bundled assets
-        run: cmake --build build-cmake --target GenerateSohOtr --parallel 3
+        run: cmake --build build-cmake --target GenerateSohOtr --parallel $(sysctl -n hw.logicalcpu)
 
       - name: Build game
-        run: cmake --build build-cmake --parallel 3
+        run: cmake --build build-cmake --parallel $(sysctl -n hw.logicalcpu)
+
+      - name: Show compile cache hits
+        run: ccache --show-stats
 
       - name: Package app
         working-directory: build-cmake
@@ -44,8 +71,10 @@ jobs:
         run: |
           cmake -S server -B server/build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
-          cmake --build server/build --parallel 3
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build server/build --parallel $(sysctl -n hw.logicalcpu)
 
       - name: Stage downloads
         run: |
@@ -64,3 +93,24 @@ jobs:
           name: OcarinaStoryCoop-mac
           path: package/
           if-no-files-found: error
+
+  keep-caches-warm:
+    if: github.event_name == 'schedule'
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      # Restoring a cache counts as using it. On a miss this rebuilds and
+      # saves the MacPorts cache, so the slow part happens here instead of
+      # during a release build.
+      - name: Restore MacPorts build tools
+        uses: melusina-org/setup-macports@v1
+        with:
+          parameters: .github/macports.yml
+
+      - name: Restore compile cache
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-mac-release
+          save: false
