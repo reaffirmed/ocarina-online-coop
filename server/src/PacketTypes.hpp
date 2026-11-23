@@ -68,7 +68,11 @@ namespace ZeldaOnline {
         CLIENT_PACKET_STORY_WARP_VOTE = 45,
         // proximity voice chat: u1 flags (1 = end of a talk spurt), u2 sequence of the first frame, u1 frame count, then
         // per frame u1 length + Opus bytes (48 kHz mono, 20 ms); relayed to the other players in the sender's scene
-        CLIENT_PACKET_VOICE = 46
+        CLIENT_PACKET_VOICE = 46,
+        // rupees for a party member: u2 target network id, u2 amount, u1 kind (RUPEE_GIVE_*: 0 a gift, 1 what did not fit
+        // in the target's wallet going back to the giver). The sender has already taken them out of its wallet: the server
+        // hands them to the target, or back to the sender (kind 2) when the target is not in the party any more
+        CLIENT_PACKET_GIVE_RUPEES = 47
 
     };
 
@@ -132,7 +136,10 @@ namespace ZeldaOnline {
         // to a member holding a warp: everybody is ready (or nobody else is there), run the transition now
         SERVER_PACKET_STORY_WARP_GO = 45,
         // u2 sender network id, then the CLIENT_PACKET_VOICE body
-        SERVER_PACKET_VOICE = 46
+        SERVER_PACKET_VOICE = 46,
+        // u2 the other member's network id, u2 amount, u1 kind (RUPEE_GIVE_*: 0 a gift from them, 1 they gave back what did
+        // not fit in their wallet, 2 they could not be reached and the rupees come back)
+        SERVER_PACKET_GIVE_RUPEES = 47
     };
 
     static const int PLAYER_PUPPET_ROOM = -1;

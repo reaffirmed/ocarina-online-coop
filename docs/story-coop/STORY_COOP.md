@@ -75,6 +75,12 @@ Co-op is on.
 **Co-op menu in game:** pause and press L. It lists your teammates; **Teleport to** one takes you to them (greyed out
 when they are in another era or not in the game). Teleport is also in the party window as before.
 
+**Give rupees to** a teammate sends them rupees from your wallet, wherever they are in the world and in either era
+(greyed out when they are not in the game). Pick the amount with left and right (1 at a time) or up and down (10 at a
+time), then press A. Rupees that don't fit in their wallet come back to you, and so do rupees for a teammate who left
+before they arrived. This works with or without "Share ammo, rupees and health": that setting shares pickups, but what
+each player spends in a shop stays their own.
+
 Markers are kept in `Save/coop/markers.json`. Friendly fire and Dark Link run in each player's own game, so a laggy
 hit is decided by the player who was hit.
 

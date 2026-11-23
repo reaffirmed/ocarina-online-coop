@@ -253,6 +253,8 @@ class ZeldaOnlineClient : public ZNetworking {
     bool m_coopMenuOpen = false;
     int m_coopMenuCursor = 0;
     int m_coopMenuStickHeld = 0;
+    uint32_t m_coopGiveTarget = 0; // the Co-op menu is asking how many rupees to give this member (0: not asking)
+    int m_coopGiveAmount = 0;
     struct CoopJoinSnapshot {
         bool has = false;
         uint8_t items[24] = {};
@@ -359,6 +361,9 @@ class ZeldaOnlineClient : public ZNetworking {
     void CoopOnSceneTrigger(AbstractActorController* sendingPlayer, const std::string& name, ByteStream& data);
     void CoopDrawOverlay(GraphicsContext* gfxCtx);
     void CoopMenuInput();
+    void CoopMenuListInput(const Input* input);
+    void CoopGiveRupeesInput(const Input* input);
+    void CoopOnGiveRupees(ByteStream& packet);
     void CoopOnSaveChanged(bool loaded);
     void CoopOnSceneInit();
     void CoopUpdateDowned(PlayState* play, Player* player);
@@ -584,6 +589,7 @@ class ZeldaOnlineClient : public ZNetworking {
     bool CoopEnterDowned(PlayState* play, Player* player);
     void CoopTrySongRevive();
     bool CoopGiveBottle(PlayState* play, Player* player, s32 itemAction);
+    bool CoopGiveRupees(uint32_t target, int amount);
     void CoopOnGameOver(PlayState* play);
     s16 CoopRespawnCooldownFrames() const;
 };

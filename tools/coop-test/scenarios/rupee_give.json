@@ -1,0 +1,573 @@
+{
+  "name": "rupee_give",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 21650
+  },
+  "boot": {
+    "entrance": 187,
+    "age": "child"
+  },
+  "stages": [
+    {
+      "name": "give",
+      "server": "fresh",
+      "roles": {
+        "A": {
+          "name": "TestA",
+          "god": true,
+          "steps": [
+            {
+              "op": "wait_play",
+              "timeout_frames": 1800
+            },
+            {
+              "op": "reset_inventory"
+            },
+            {
+              "op": "connect"
+            },
+            {
+              "op": "wait_until",
+              "cond": "connected",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "wait_until",
+              "cond": "net_id",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "warp",
+              "entrance": 238,
+              "scene": 85,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "wait_until",
+              "cond": "other_players",
+              "timeout_frames": 3600,
+              "n": 1
+            },
+            {
+              "op": "create_party",
+              "story_coop": true,
+              "story_code": "rupee-qa-code"
+            },
+            {
+              "op": "wait_until",
+              "cond": "has_party",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "invite"
+            },
+            {
+              "op": "wait_until",
+              "cond": "party_size",
+              "timeout_frames": 3600,
+              "n": 2
+            },
+            {
+              "op": "set_rupees",
+              "n": 50
+            },
+            {
+              "op": "wait_frames",
+              "n": 300
+            },
+            {
+              "op": "give_rupees",
+              "n": 30
+            },
+            {
+              "op": "wait_until",
+              "cond": "rupees",
+              "n": 20,
+              "timeout_frames": 600
+            },
+            {
+              "op": "observe",
+              "name": "gift"
+            },
+            {
+              "op": "wait_frames",
+              "n": 400
+            },
+            {
+              "op": "give_rupees",
+              "n": 20
+            },
+            {
+              "op": "wait_frames",
+              "n": 300
+            },
+            {
+              "op": "observe",
+              "name": "full"
+            },
+            {
+              "op": "give_rupees",
+              "n": 10,
+              "target_id": 999
+            },
+            {
+              "op": "wait_frames",
+              "n": 300
+            },
+            {
+              "op": "observe",
+              "name": "undelivered"
+            },
+            {
+              "op": "quit",
+              "pass": true
+            }
+          ]
+        },
+        "B": {
+          "name": "TestB",
+          "god": true,
+          "steps": [
+            {
+              "op": "wait_play",
+              "timeout_frames": 1800
+            },
+            {
+              "op": "reset_inventory"
+            },
+            {
+              "op": "connect"
+            },
+            {
+              "op": "wait_until",
+              "cond": "connected",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "wait_until",
+              "cond": "net_id",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "warp",
+              "entrance": 238,
+              "scene": 85,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "wait_until",
+              "cond": "other_players",
+              "timeout_frames": 3600,
+              "n": 1
+            },
+            {
+              "op": "wait_until",
+              "cond": "invite_pending",
+              "timeout_frames": 3600
+            },
+            {
+              "op": "accept_invite"
+            },
+            {
+              "op": "wait_until",
+              "cond": "party_size",
+              "timeout_frames": 3600,
+              "n": 2
+            },
+            {
+              "op": "set_rupees",
+              "n": 0
+            },
+            {
+              "op": "wait_until",
+              "cond": "rupees",
+              "n": 30,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "observe",
+              "name": "gift"
+            },
+            {
+              "op": "set_rupees",
+              "n": 95
+            },
+            {
+              "op": "wait_until",
+              "cond": "rupees",
+              "n": 99,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "wait_frames",
+              "n": 120
+            },
+            {
+              "op": "observe",
+              "name": "full"
+            },
+            {
+              "op": "wait_frames",
+              "n": 600
+            },
+            {
+              "op": "observe",
+              "name": "undelivered"
+            },
+            {
+              "op": "quit",
+              "pass": true
+            }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "type": "each",
+          "obs": "gift",
+          "path": "rupees",
+          "op": "eq",
+          "value": 20,
+          "label": "A paid 30 of its 50 rupees",
+          "roles": [
+            "A"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "gift",
+          "path": "rupees",
+          "op": "eq",
+          "value": 30,
+          "label": "B got the 30 rupees",
+          "roles": [
+            "B"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "full",
+          "path": "rupees",
+          "op": "eq",
+          "value": 16,
+          "label": "A got back the 16 that did not fit in B's wallet",
+          "roles": [
+            "A"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "full",
+          "path": "rupees",
+          "op": "eq",
+          "value": 99,
+          "label": "B's wallet is full at 99, not more",
+          "roles": [
+            "B"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "undelivered",
+          "path": "rupees",
+          "op": "eq",
+          "value": 16,
+          "label": "rupees for nobody came back to A",
+          "roles": [
+            "A"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "undelivered",
+          "path": "rupees",
+          "op": "eq",
+          "value": 99,
+          "label": "B did not get the undelivered rupees",
+          "roles": [
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "menu",
+      "server": "fresh",
+      "roles": {
+        "A": {
+          "name": "TestA",
+          "god": true,
+          "steps": [
+            {
+              "op": "wait_play",
+              "timeout_frames": 1800
+            },
+            {
+              "op": "reset_inventory"
+            },
+            {
+              "op": "connect"
+            },
+            {
+              "op": "wait_until",
+              "cond": "connected",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "wait_until",
+              "cond": "net_id",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "warp",
+              "entrance": 238,
+              "scene": 85,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "wait_until",
+              "cond": "other_players",
+              "timeout_frames": 3600,
+              "n": 1
+            },
+            {
+              "op": "create_party",
+              "story_coop": true,
+              "story_code": "rupee-qa-code"
+            },
+            {
+              "op": "wait_until",
+              "cond": "has_party",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "invite"
+            },
+            {
+              "op": "wait_until",
+              "cond": "party_size",
+              "timeout_frames": 3600,
+              "n": 2
+            },
+            {
+              "op": "set_rupees",
+              "n": 50
+            },
+            {
+              "op": "wait_frames",
+              "n": 300
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "START"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 60
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "L"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 10
+            },
+            {
+              "op": "wait_until",
+              "cond": "field",
+              "field": "coop_menu",
+              "value": 1,
+              "timeout_frames": 120
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "DDOWN"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 10
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "A"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 10
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "DUP"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 10
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "DRIGHT"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 240
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "A"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 30
+            },
+            {
+              "op": "input",
+              "buttons": [
+                "START"
+              ],
+              "n": 1
+            },
+            {
+              "op": "wait_frames",
+              "n": 60
+            },
+            {
+              "op": "wait_until",
+              "cond": "rupees",
+              "n": 29,
+              "timeout_frames": 900
+            },
+            {
+              "op": "observe",
+              "name": "menu_gift"
+            },
+            {
+              "op": "quit",
+              "pass": true
+            }
+          ]
+        },
+        "B": {
+          "name": "TestB",
+          "god": true,
+          "steps": [
+            {
+              "op": "wait_play",
+              "timeout_frames": 1800
+            },
+            {
+              "op": "reset_inventory"
+            },
+            {
+              "op": "connect"
+            },
+            {
+              "op": "wait_until",
+              "cond": "connected",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "wait_until",
+              "cond": "net_id",
+              "timeout_frames": 1200
+            },
+            {
+              "op": "warp",
+              "entrance": 238,
+              "scene": 85,
+              "timeout_frames": 1800
+            },
+            {
+              "op": "wait_until",
+              "cond": "other_players",
+              "timeout_frames": 3600,
+              "n": 1
+            },
+            {
+              "op": "wait_until",
+              "cond": "invite_pending",
+              "timeout_frames": 3600
+            },
+            {
+              "op": "accept_invite"
+            },
+            {
+              "op": "wait_until",
+              "cond": "party_size",
+              "timeout_frames": 3600,
+              "n": 2
+            },
+            {
+              "op": "set_rupees",
+              "n": 0
+            },
+            {
+              "op": "wait_until",
+              "cond": "rupees",
+              "n": 21,
+              "timeout_frames": 3600
+            },
+            {
+              "op": "observe",
+              "name": "menu_gift"
+            },
+            {
+              "op": "wait_frames",
+              "n": 300
+            },
+            {
+              "op": "quit",
+              "pass": true
+            }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "type": "each",
+          "obs": "menu_gift",
+          "path": "rupees",
+          "op": "eq",
+          "value": 29,
+          "label": "menu: A gave 21 of its 50 rupees",
+          "roles": [
+            "A"
+          ]
+        },
+        {
+          "type": "each",
+          "obs": "menu_gift",
+          "path": "rupees",
+          "op": "eq",
+          "value": 21,
+          "label": "menu: B got 21 rupees",
+          "roles": [
+            "B"
+          ]
+        }
+      ]
+    }
+  ]
+}

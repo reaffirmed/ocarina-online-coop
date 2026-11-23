@@ -314,6 +314,20 @@ struct AutoTestAccess {
         }
         return sent;
     }
+    // The Co-op menu's "Give rupees to", for the first other party member (optionally by name), or for a raw network id
+    // (`target_id`, which may be nobody: the server then sends the rupees back).
+    static bool GiveRupees(const std::string& name, int amount, int targetId) {
+        if (targetId > 0) {
+            return C()->CoopGiveRupees((uint32_t)targetId, amount);
+        }
+        for (auto& p : Players()) {
+            if (!p.isInParty || (int)p.networkID == C()->m_myNetworkID || (!name.empty() && p.name != name)) {
+                continue;
+            }
+            return C()->CoopGiveRupees(p.networkID, amount);
+        }
+        return false;
+    }
     // Same packet as the player list "Teleport to" entry, for the first other player (optionally by name).
     static bool TeleportTo(const std::string& name) {
         for (auto& p : Players()) {
@@ -423,6 +437,7 @@ struct State {
     int padStickX = 0;
     int padStickY = 0;
     double padStartPos[3] = { 0, 0, 0 };
+    uint32_t padAppliedFrame = 0xFFFFFFFF; // the game frame the scripted input was last applied on
     float markPos[3] = { 0, 0, 0 }; // move_link mark
     bool hasMark = false;
 };
@@ -907,6 +922,11 @@ void OnMainStart() {
     if (!sState.enabled || sState.scenario.empty() || sState.padFrames <= 0 || gPlayState == nullptr) {
         return;
     }
+    // once per frame: the Co-op menu applies it early too (AutoTestApplyInput), the hooks run in no fixed order
+    if (sState.padAppliedFrame == gPlayState->state.frames) {
+        return;
+    }
+    sState.padAppliedFrame = gPlayState->state.frames;
     Input* in = &gPlayState->state.input[0];
     const int idx = sState.padTotal - sState.padFrames;
     sState.padFrames--;
@@ -1176,6 +1196,13 @@ bool RunStep(const json& step) {
         if (!AutoTestAccess::SendSettings(step)) {
             return timedOut("set_party_settings: not connected");
         }
+        return true;
+    }
+    if (op == "give_rupees") {
+        if (!AutoTestAccess::GiveRupees(step.value("name", ""), step.value("n", 0), step.value("target_id", 0))) {
+            return timedOut("give_rupees: nobody to give to, or no rupees");
+        }
+        Event("rupees given");
         return true;
     }
     if (op == "teleport_to") {
@@ -1883,3 +1910,10 @@ void RegisterHooks() {
 }
 
 } // namespace AutoTest
+
+namespace ZeldaOnline {
+// The Co-op menu reads the controller in the same frame hook as the scripted input, so it applies that input first
+void AutoTestApplyInput() {
+    AutoTest::OnMainStart();
+}
+} // namespace ZeldaOnline

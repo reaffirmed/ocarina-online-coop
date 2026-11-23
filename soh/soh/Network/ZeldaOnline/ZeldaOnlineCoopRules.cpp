@@ -11,6 +11,9 @@
 //  co_revive <target> <kind> <health>    a teammate revives the target (kind: COOP_REVIVE_*)
 //  co_give   <target> <kind>             a teammate gives the target a bottle (kind: COOP_GIVE_*)
 //  co_ready                              this player's held transition is a ready check (the vote follows)
+//
+// Rupees a teammate gives from the Co-op menu are not a scene trigger: they reach the member anywhere in the world, so
+// they go through the server (CLIENT_PACKET_GIVE_RUPEES / SERVER_PACKET_GIVE_RUPEES).
 
 #include "ZeldaOnlineClient.hpp"
 #include "ZeldaOnlineRoomWindow.hpp"
@@ -48,10 +51,13 @@ void DrawScreenText(GraphicsContext* gfxCtx, const char* text, s16 x, s16 y, Col
 
 namespace ZeldaOnline {
 
+void AutoTestApplyInput(); // the test harness's scripted input (AutoTest.inl), a no-op in normal play
+
 namespace {
 
 enum : uint8_t { COOP_REVIVE_SONG = 0, COOP_REVIVE_FAIRY = 1, COOP_REVIVE_RED = 2, COOP_REVIVE_BLUE = 3 };
 enum : uint8_t { COOP_GIVE_RED = 0, COOP_GIVE_BLUE = 1, COOP_GIVE_GREEN = 2, COOP_GIVE_MILK = 3 };
+enum : uint8_t { RUPEE_GIVE_GIFT = 0, RUPEE_GIVE_RETURNED = 1, RUPEE_GIVE_UNDELIVERED = 2 };
 
 constexpr int kFps = 20;
 constexpr s16 kSongMagicCost = 48;        // the whole small meter, half of the upgraded one
@@ -893,11 +899,23 @@ void ZeldaOnlineClient::CoopOnSceneTrigger(AbstractActorController* sendingPlaye
 // ---------------------------------------------------------------------------------------------------------------
 
 namespace {
+enum class CoopMenuAction { Close, Teleport, GiveRupees };
+
 struct CoopMenuRow {
     std::string label;
-    uint32_t networkID = 0; // 0: Close
+    uint32_t networkID = 0;
+    CoopMenuAction action = CoopMenuAction::Close;
     bool enabled = true;
 };
+
+// The rupees in the wallet, counting the ones the counter is still adding or taking away
+int WalletRupees() {
+    return std::max(0, (int)gSaveContext.rupees + (int)gSaveContext.rupeeAccumulator);
+}
+
+int WalletCapacity() {
+    return CUR_CAPACITY(UPG_WALLET);
+}
 
 std::vector<CoopMenuRow> BuildMenuRows() {
     std::vector<CoopMenuRow> rows;
@@ -908,6 +926,7 @@ std::vector<CoopMenuRow> BuildMenuRows() {
                 continue;
             CoopMenuRow row;
             row.networkID = entry.networkID;
+            row.action = CoopMenuAction::Teleport;
             row.label = "Teleport to " + entry.name;
             if (entry.age < 2 && entry.age != myAge) {
                 row.label += " (other era)";
@@ -917,6 +936,17 @@ std::vector<CoopMenuRow> BuildMenuRows() {
                 row.enabled = false;
             }
             rows.push_back(row);
+
+            // rupees go anywhere in the world and to either era, but only to a member who is playing a file
+            CoopMenuRow give;
+            give.networkID = entry.networkID;
+            give.action = CoopMenuAction::GiveRupees;
+            give.label = "Give rupees to " + entry.name;
+            if (entry.age >= 2) {
+                give.label += " (not in game)";
+                give.enabled = false;
+            }
+            rows.push_back(give);
         }
     }
     CoopMenuRow close;
@@ -941,6 +971,7 @@ void ClosePauseMenu(PlayState* play) {
 
 // Runs before the frame: the menu takes the controller while it is open.
 void ZeldaOnlineClient::CoopMenuInput() {
+    AutoTestApplyInput();
     PlayState* play = gPlayState;
     if (play == nullptr || m_partyID == 0 || !isConnected || gSaveContext.fileNum == 0xFF) {
         m_coopMenuOpen = false;
@@ -962,6 +993,7 @@ void ZeldaOnlineClient::CoopMenuInput() {
             m_coopMenuOpen = true;
             m_coopMenuCursor = 0;
             m_coopMenuStickHeld = 0;
+            m_coopGiveTarget = 0;
             Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
             input->press.button &= ~BTN_L;
             input->cur.button &= ~BTN_L;
@@ -969,6 +1001,25 @@ void ZeldaOnlineClient::CoopMenuInput() {
         return;
     }
 
+    if (m_coopGiveTarget != 0) {
+        CoopGiveRupeesInput(input);
+    } else {
+        CoopMenuListInput(input);
+    }
+
+    // the pause screen does not see the buttons the menu used
+    input->press.button = 0;
+    input->cur.button &= ~(BTN_A | BTN_B | BTN_L | BTN_R | BTN_Z | BTN_START | BTN_CUP | BTN_CDOWN | BTN_CLEFT |
+                           BTN_CRIGHT | BTN_DUP | BTN_DDOWN | BTN_DLEFT | BTN_DRIGHT);
+    input->rel.stick_x = input->rel.stick_y = 0;
+    input->cur.stick_x = input->cur.stick_y = 0;
+    input->press.stick_x = input->press.stick_y = 0;
+}
+
+// The list of the Co-op menu: teleport to a teammate, give them rupees, close
+void ZeldaOnlineClient::CoopMenuListInput(const Input* input) {
+    PlayState* play = gPlayState;
+    const u16 pressed = input->press.button;
     std::vector<CoopMenuRow> rows = BuildMenuRows();
     const int count = (int)rows.size();
     m_coopMenuCursor = CLAMP(m_coopMenuCursor, 0, count - 1);
@@ -996,11 +1047,21 @@ void ZeldaOnlineClient::CoopMenuInput() {
         Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
     } else if (pressed & BTN_A) {
         const CoopMenuRow& row = rows[m_coopMenuCursor];
-        if (row.networkID == 0) {
+        if (row.action == CoopMenuAction::Close) {
             m_coopMenuOpen = false;
             Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
         } else if (!row.enabled) {
             Sfx_PlaySfxCentered(NA_SE_SY_ERROR);
+        } else if (row.action == CoopMenuAction::GiveRupees) {
+            if (WalletRupees() <= 0) {
+                Sfx_PlaySfxCentered(NA_SE_SY_ERROR);
+                CoopShowNotice("You have no rupees to give.", 3);
+            } else {
+                m_coopGiveTarget = row.networkID;
+                m_coopGiveAmount = std::min(10, WalletRupees());
+                m_coopMenuStickHeld = 0;
+                Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
+            }
         } else {
             WritePacket(newPacket(CLIENT_PACKET_TELEPORT_TO_PARTY_MEMBER) << PackedUInt2(row.networkID));
             m_coopMenuOpen = false;
@@ -1009,14 +1070,127 @@ void ZeldaOnlineClient::CoopMenuInput() {
             CoopShowNotice("Teleporting to " + MemberName(row.networkID) + "...", 3);
         }
     }
+}
 
-    // the pause screen does not see the buttons the menu used
-    input->press.button = 0;
-    input->cur.button &= ~(BTN_A | BTN_B | BTN_L | BTN_R | BTN_Z | BTN_START | BTN_CUP | BTN_CDOWN | BTN_CLEFT |
-                           BTN_CRIGHT | BTN_DUP | BTN_DDOWN | BTN_DLEFT | BTN_DRIGHT);
-    input->rel.stick_x = input->rel.stick_y = 0;
-    input->cur.stick_x = input->cur.stick_y = 0;
-    input->press.stick_x = input->press.stick_y = 0;
+// How many rupees to give: left and right change it by 1, up and down by 10, A gives them, B goes back to the list
+void ZeldaOnlineClient::CoopGiveRupeesInput(const Input* input) {
+    const u16 pressed = input->press.button;
+    const int have = WalletRupees();
+    if (have <= 0 || !IsPartyMember(m_coopGiveTarget)) {
+        m_coopGiveTarget = 0;
+        Sfx_PlaySfxCentered(NA_SE_SY_ERROR);
+        return;
+    }
+
+    int step = 0;
+    if (pressed & (BTN_DUP | BTN_CUP))
+        step = 10;
+    else if (pressed & (BTN_DDOWN | BTN_CDOWN))
+        step = -10;
+    else if (pressed & (BTN_DRIGHT | BTN_CRIGHT))
+        step = 1;
+    else if (pressed & (BTN_DLEFT | BTN_CLEFT))
+        step = -1;
+    else if (std::abs(input->rel.stick_y) > 30 || std::abs(input->rel.stick_x) > 30) {
+        // the stick moves once, then repeats while it is held
+        if (m_coopMenuStickHeld == 0 || (m_coopMenuStickHeld > 8 && (m_coopMenuStickHeld % 2) == 0)) {
+            if (std::abs(input->rel.stick_y) >= std::abs(input->rel.stick_x))
+                step = input->rel.stick_y > 0 ? 10 : -10;
+            else
+                step = input->rel.stick_x > 0 ? 1 : -1;
+        }
+        m_coopMenuStickHeld++;
+    } else {
+        m_coopMenuStickHeld = 0;
+    }
+    if (step != 0) {
+        const int next = CLAMP(m_coopGiveAmount + step, 1, have);
+        if (next != m_coopGiveAmount) {
+            m_coopGiveAmount = next;
+            Sfx_PlaySfxCentered(NA_SE_SY_CURSOR);
+        }
+    }
+    m_coopGiveAmount = CLAMP(m_coopGiveAmount, 1, have);
+
+    if (pressed & (BTN_B | BTN_L)) {
+        m_coopGiveTarget = 0;
+        m_coopMenuStickHeld = 0;
+        Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
+    } else if (pressed & BTN_START) {
+        m_coopGiveTarget = 0;
+        m_coopMenuOpen = false;
+        Sfx_PlaySfxCentered(NA_SE_SY_DECIDE);
+    } else if (pressed & BTN_A) {
+        const uint32_t target = m_coopGiveTarget;
+        m_coopGiveTarget = 0;
+        if (CoopGiveRupees(target, m_coopGiveAmount))
+            Sfx_PlaySfxCentered(NA_SE_SY_GET_RUPY);
+        else
+            Sfx_PlaySfxCentered(NA_SE_SY_ERROR);
+    }
+}
+
+// Sends rupees from this player's wallet to a party member. Returns false when there is nothing to send.
+bool ZeldaOnlineClient::CoopGiveRupees(uint32_t target, int amount) {
+    amount = std::min(amount, WalletRupees());
+    if (amount <= 0 || target == 0 || target == (uint32_t)m_myNetworkID || !isConnected || m_partyID == 0)
+        return false;
+    // paid now: the server hands them over, or sends them back if the teammate can't be reached
+    Rupees_ChangeBy((s16)-amount);
+    WritePacket(newPacket(CLIENT_PACKET_GIVE_RUPEES)
+                << PackedUInt2(target) << PackedUInt2((uint32_t)amount) << PackedUInt1(RUPEE_GIVE_GIFT));
+    CoopShowNotice("You gave " + MemberName(target) + " " + std::to_string(amount) +
+                       (amount == 1 ? " rupee." : " rupees."),
+                   3);
+    return true;
+}
+
+// Rupees from a teammate, or rupees of this player's that come back
+void ZeldaOnlineClient::CoopOnGiveRupees(ByteStream& packet) {
+    if (packet.BytesLeft() < 5)
+        return;
+    const uint32_t other = packet.Read<PackedUInt2>().value();
+    const int amount = (int)packet.Read<PackedUInt2>().value();
+    const uint8_t kind = (uint8_t)packet.Read<PackedUInt1>().value();
+    if (amount <= 0 || amount > 9999)
+        return;
+    const std::string name = MemberName(other);
+    const auto plural = [](int n) { return std::to_string(n) + (n == 1 ? " rupee" : " rupees"); };
+
+    // no file is being played: nothing can go into a wallet. A gift goes straight back; a return has nowhere to go.
+    if (gSaveContext.fileNum == 0xFF) {
+        if (kind == RUPEE_GIVE_GIFT)
+            WritePacket(newPacket(CLIENT_PACKET_GIVE_RUPEES)
+                        << PackedUInt2(other) << PackedUInt2((uint32_t)amount) << PackedUInt1(RUPEE_GIVE_RETURNED));
+        return;
+    }
+
+    const int room = std::max(0, WalletCapacity() - WalletRupees());
+    const int kept = std::min(amount, room);
+    if (kept > 0)
+        Rupees_ChangeBy((s16)kept);
+
+    if (kind == RUPEE_GIVE_GIFT) {
+        const int left = amount - kept;
+        if (left > 0) {
+            // the wallet is full: the rest goes back to the giver
+            WritePacket(newPacket(CLIENT_PACKET_GIVE_RUPEES)
+                        << PackedUInt2(other) << PackedUInt2((uint32_t)left) << PackedUInt1(RUPEE_GIVE_RETURNED));
+        }
+        if (kept > 0 && left > 0)
+            CoopShowNotice(name + " gave you " + plural(kept) + ". Your wallet is full, so " + std::to_string(left) +
+                           " went back.");
+        else if (kept > 0)
+            CoopShowNotice(name + " gave you " + plural(kept) + ".");
+        else
+            CoopShowNotice(name + " tried to give you " + plural(amount) + ", but your wallet is full.");
+        if (kept > 0)
+            Sfx_PlaySfxCentered(NA_SE_SY_GET_RUPY);
+    } else if (kind == RUPEE_GIVE_RETURNED) {
+        CoopShowNotice(name + "'s wallet is full: " + plural(amount) + " came back to you.");
+    } else {
+        CoopShowNotice(name + " could not be reached: your " + plural(amount) + " came back.");
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1255,6 +1429,25 @@ void ZeldaOnlineClient::CoopDrawOverlay(GraphicsContext* gfxCtx) {
             // above the rupee counter
             FillRect(gfxCtx, 8, 186, (s16)(TextWidth(hint, 0.5f) + 10), 13, panel);
             DrawScreenText(gfxCtx, hint, 13, 188, yellow, 0.5f);
+        } else if (m_coopGiveTarget != 0) {
+            const s16 w = 220, h = 74, x = 50, y = 83;
+            FillRect(gfxCtx, x, y, w, h, { 0, 0, 0, 205 });
+            FillRect(gfxCtx, x, y, w, 2, { 255, 230, 110, 255 });
+            std::string title = "Give rupees to " + MemberName(m_coopGiveTarget);
+            while (title.size() > 4 && TextWidth(title, 0.65f) > w - 16)
+                title = title.substr(0, title.size() - 4) + "...";
+            DrawScreenText(gfxCtx, title.c_str(), x + 8, y + 6, yellow, 0.65f);
+            const std::string amount = std::to_string(m_coopGiveAmount);
+            const float big = 1.0f;
+            const float aw = TextWidth(amount, big);
+            DrawScreenText(gfxCtx, "<", (s16)(x + w / 2 - aw / 2 - 16), y + 26, dim, big);
+            DrawScreenText(gfxCtx, amount.c_str(), (s16)(x + w / 2 - aw / 2), y + 26, white, big);
+            DrawScreenText(gfxCtx, ">", (s16)(x + w / 2 + aw / 2 + 8), y + 26, dim, big);
+            const std::string have = "You have " + std::to_string(WalletRupees());
+            DrawScreenText(gfxCtx, have.c_str(), (s16)(x + w / 2 - TextWidth(have, textScale) / 2), y + 46, dim,
+                           textScale);
+            DrawScreenText(gfxCtx, "Left/Right: 1  Up/Down: 10  A: give  B: back", x + 8, (s16)(y + h - 13), dim,
+                           textScale);
         } else {
             std::vector<CoopMenuRow> rows = BuildMenuRows();
             std::vector<std::string> status;

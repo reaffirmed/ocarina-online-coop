@@ -2143,6 +2143,36 @@ namespace ZeldaOnline
 		}
 		break;
 
+		case CLIENT_PACKET_GIVE_RUPEES:
+		{
+			if (data.BytesLeft() < 5)
+				break;
+
+			auto targetID = data.Read<PackedUInt2>().value();
+			auto amount = data.Read<PackedUInt2>().value();
+			auto kind = data.Read<PackedUInt1>().value();
+			// a wallet holds at most 999 (a cheated one 9999): anything bigger is not a real transfer
+			if (amount == 0 || amount > 9999 || kind > 1)
+				break;
+
+			// relayed only, never stored. The sender has already paid, so rupees that can't be handed over go back
+			// to it rather than vanishing.
+			auto partyID = player->PartyGetID();
+			auto it = m_players.find((int)targetID);
+			if (partyID != 0 && it != m_players.end() && it->second.get() != player &&
+			    it->second->PartyGetID() == partyID)
+			{
+				it->second->SendPacket(newPacket(SERVER_PACKET_GIVE_RUPEES)
+					<< PackedUInt2((unsigned int)player->NetworkID()) << PackedUInt2(amount) << PackedUInt1(kind));
+			}
+			else
+			{
+				player->SendPacket(newPacket(SERVER_PACKET_GIVE_RUPEES)
+					<< PackedUInt2(targetID) << PackedUInt2(amount) << PackedUInt1(2));
+			}
+		}
+		break;
+
 		default:
 			std::printf("OOTServer: unknown packet id %u from player %d\n",
 				clientPacketID, player->NetworkID());
